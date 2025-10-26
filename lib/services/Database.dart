@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'dart:io';
 
 class DatabaseService {
   String dbName = '';
@@ -32,6 +33,19 @@ class DatabaseService {
     dbName = '';
     dbPath = '';
     database = null;
+  }
+
+  Future<List<String>> getTables() async {
+    if (database == null) return [];
+    final result = await database!.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';",
+    );
+    return result.map((row) => row['name'] as String).toList();
+  }
+
+  Future<bool> databaseExists(String dbName) async {
+    final dbPath = join(await getDatabasesPath(), dbName);
+    return File(dbPath).existsSync();
   }
 
   // Close database
