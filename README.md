@@ -4,29 +4,58 @@ A powerful, cross-platform SQL database editor built with Flutter that provides 
 
 ## Screenshots
 
-Mobile screenshots from the `images/` folder (2 per row):
+### Mobile
 
 <table>
   <tr>
     <td width="50%" align="center">
-      <img src="images/home_main_screen.jpg" alt="Home (main)" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <img src="images/mobile/home_main_screen.jpg" alt="Home (main)" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
       <br />
       <b>Home (main)</b>
     </td>
     <td width="50%" align="center">
-      <img src="images/home_screen.jpg" alt="Home" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <img src="images/mobile/home_screen.jpg" alt="Home" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
       <br />
       <b>Home</b>
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
-      <img src="images/sql_editor_screen.jpg" alt="SQL Editor" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <img src="images/mobile/sql_editor_screen.jpg" alt="SQL Editor" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
       <br />
       <b>SQL Editor</b>
     </td>
     <td width="50%" align="center">
-      <img src="images/settings.jpg" alt="Settings" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <img src="images/mobile/settings.jpg" alt="Settings" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <br />
+      <b>Settings</b>
+    </td>
+  </tr>
+</table>
+
+### Desktop
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="images/desktop/home_main_screen.png" alt="Home (main)" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <br />
+      <b>Home (main)</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="images/desktop/home_screen.png" alt="Home" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <br />
+      <b>Home</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="images/desktop/sql_editor_screen.png" alt="SQL Editor" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <br />
+      <b>SQL Editor</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="images/desktop/settings.png" alt="Settings" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
       <br />
       <b>Settings</b>
     </td>
