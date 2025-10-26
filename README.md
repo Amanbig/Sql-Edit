@@ -53,7 +53,7 @@ A powerful, cross-platform SQL database editor built with Flutter that provides 
 
 ### Clone & Setup
 ```bash
-git clone https://github.com/yourusername/sql_edit.git
+git clone https://github.com/Amanbig/Sql-Edit.git
 cd sql_edit
 flutter pub get
 ```
@@ -207,8 +207,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
+- GitHub: [@Amanbig](https://github.com/Amanbig)
+- Email: amanpreetsinghjhiwant7@gmail.com
 
 ## 🙏 Acknowledgments
 
