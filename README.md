@@ -4,12 +4,14 @@ A powerful, cross-platform SQL database editor built with Flutter that provides 
 
 ## Screenshots
 
-Mobile screenshots from the `images/` folder:
+Mobile screenshots from the `images/` folder (2 per row):
 
-![Home (main)](images/home_main_screen.jpg)
-![Home](images/home_screen.jpg)
-![SQL Editor](images/sql_editor_screen.jpg)
-![Settings](images/settings.jpg)
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+  <img src="images/home_main_screen.jpg" alt="Home (main)" style="width:49%;height:auto;border:1px solid #ddd;padding:4px;border-radius:6px" />
+  <img src="images/home_screen.jpg" alt="Home" style="width:49%;height:auto;border:1px solid #ddd;padding:4px;border-radius:6px" />
+  <img src="images/sql_editor_screen.jpg" alt="SQL Editor" style="width:49%;height:auto;border:1px solid #ddd;padding:4px;border-radius:6px" />
+  <img src="images/settings.jpg" alt="Settings" style="width:49%;height:auto;border:1px solid #ddd;padding:4px;border-radius:6px" />
+</div>
 
 
 ## ✨ Features
