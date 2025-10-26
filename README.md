@@ -6,12 +6,32 @@ A powerful, cross-platform SQL database editor built with Flutter that provides 
 
 Mobile screenshots from the `images/` folder (2 per row):
 
-<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
-  <img src="images/home_main_screen.jpg" alt="Home (main)" style="width:calc(50% - 8px);height:auto;border:1px solid #e0e0e0;padding:8px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06);background:#fff" />
-  <img src="images/home_screen.jpg" alt="Home" style="width:calc(50% - 8px);height:auto;border:1px solid #e0e0e0;padding:8px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06);background:#fff" />
-  <img src="images/sql_editor_screen.jpg" alt="SQL Editor" style="width:calc(50% - 8px);height:auto;border:1px solid #e0e0e0;padding:8px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06);background:#fff" />
-  <img src="images/settings.jpg" alt="Settings" style="width:calc(50% - 8px);height:auto;border:1px solid #e0e0e0;padding:8px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06);background:#fff" />
-</div>
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="images/home_main_screen.jpg" alt="Home (main)" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <br />
+      <b>Home (main)</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="images/home_screen.jpg" alt="Home" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <br />
+      <b>Home</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="images/sql_editor_screen.jpg" alt="SQL Editor" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <br />
+      <b>SQL Editor</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="images/settings.jpg" alt="Settings" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
+      <br />
+      <b>Settings</b>
+    </td>
+  </tr>
+</table>
 
 
 ## ✨ Features
