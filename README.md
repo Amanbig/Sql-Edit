@@ -2,6 +2,16 @@
 
 A powerful, cross-platform SQL database editor built with Flutter that provides a seamless experience for managing SQLite databases on both mobile and desktop platforms.
 
+## Screenshots
+
+Mobile screenshots from the `images/` folder:
+
+![Home (main)](images/home_main_screen.jpg)
+![Home](images/home_screen.jpg)
+![SQL Editor](images/sql_editor_screen.jpg)
+![Settings](images/settings.jpg)
+
+
 ## ✨ Features
 
 ### 🗄️ Database Management
