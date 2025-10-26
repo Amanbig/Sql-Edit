@@ -1,40 +1,56 @@
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'dart:io';
+import '../models/DatabaseInfo.dart';
 
 class DatabaseService {
-  String dbName = '';
-  Database? database; // sqflite Database
-  String dbPath = '';
+  DatabaseInfo? _databaseInfo;
+  Database? database;
+
+  DatabaseInfo? get databaseInfo => _databaseInfo;
 
   // Open or create database
-  Future<void> openDB(String name) async {
-    dbName = name;
-    dbPath = join(await getDatabasesPath(), dbName);
+  Future<DatabaseInfo> openDB(String name) async {
+    final dbPath = join(await getDatabasesPath(), name);
 
     database = await openDatabase(
       dbPath,
       version: 1,
       onCreate: (db, version) async {
-        print('Database created: $dbName');
+        print('Database created: $name');
       },
     );
 
-    print('Database opened: $dbName');
+    _databaseInfo = DatabaseInfo(name: name, path: dbPath, isOpen: true);
+    print('Database opened: $name');
+    return _databaseInfo!;
+  }
+
+  // Close database
+  Future<void> closeDB() async {
+    await database?.close();
+    print('Database closed: ${_databaseInfo?.name}');
+    database = null;
+    if (_databaseInfo != null) {
+      _databaseInfo = _databaseInfo!.copyWith(isOpen: false);
+    }
   }
 
   // Delete database
   Future<void> deleteDB() async {
-    if (dbPath.isNotEmpty) {
+    if (_databaseInfo == null) return;
+
+    final dbPath = _databaseInfo!.path;
+    if (File(dbPath).existsSync()) {
       await deleteDatabase(dbPath);
-      print('Database deleted: $dbName');
+      print('Database deleted: ${_databaseInfo!.name}');
     }
 
-    dbName = '';
-    dbPath = '';
     database = null;
+    _databaseInfo = null;
   }
 
+  // List all tables
   Future<List<String>> getTables() async {
     if (database == null) return [];
     final result = await database!.rawQuery(
@@ -43,15 +59,9 @@ class DatabaseService {
     return result.map((row) => row['name'] as String).toList();
   }
 
-  Future<bool> databaseExists(String dbName) async {
-    final dbPath = join(await getDatabasesPath(), dbName);
+  // Check if database file exists
+  Future<bool> databaseExists(String name) async {
+    final dbPath = join(await getDatabasesPath(), name);
     return File(dbPath).existsSync();
-  }
-
-  // Close database
-  Future<void> closeDB() async {
-    await database?.close();
-    print('Database closed: $dbName');
-    database = null;
   }
 }
