@@ -8,24 +8,22 @@ A powerful, cross-platform SQL database editor built with Flutter that provides 
 
 <table>
   <tr>
-    <td width="50%" align="center">
+    <td width="25%" align="center">
       <img src="images/mobile/home_main_screen.jpg" alt="Home (main)" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
       <br />
       <b>Home (main)</b>
     </td>
-    <td width="50%" align="center">
+    <td width="25%" align="center">
       <img src="images/mobile/home_screen.jpg" alt="Home" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
       <br />
       <b>Home</b>
     </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
+    <td width="25%" align="center">
       <img src="images/mobile/sql_editor_screen.jpg" alt="SQL Editor" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
       <br />
       <b>SQL Editor</b>
     </td>
-    <td width="50%" align="center">
+    <td width="25%" align="center">
       <img src="images/mobile/settings.jpg" alt="Settings" style="border: 2px solid #ddd; border-radius: 8px;" width="100%" />
       <br />
       <b>Settings</b>
