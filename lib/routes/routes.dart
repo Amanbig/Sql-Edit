@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sql_edit/screens/home/HomeScreen.dart';
-import 'package:sql_edit/screens/SqlEditScreen.dart';
+import 'package:sql_edit/screens/sqlEditScreen/SqlEditScreen.dart';
 import 'package:sql_edit/screens/settings/SettingsScreen.dart';
 import 'package:sql_edit/screens/about/AboutScreen.dart';
 import 'package:sql_edit/screens/database/DatabaseManagerScreen.dart';
