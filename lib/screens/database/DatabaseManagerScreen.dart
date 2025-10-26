@@ -26,6 +26,81 @@ class _DatabaseManagerScreenState extends ConsumerState<DatabaseManagerScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _createSampleDatabaseIfNeeded();
+  }
+
+  void _createSampleDatabaseIfNeeded() async {
+    try {
+      final dbService = ref.read(databaseServiceProvider);
+
+      // Check if we already have a database connected
+      if (dbService.databaseInfo != null && dbService.databaseInfo!.isOpen) {
+        return;
+      }
+
+      // Create a sample database with demo data
+      final info = await dbService.openDB('sample_database.db');
+      ref.read(databaseInfoProvider.notifier).state = info;
+
+      // Create sample tables and data
+      await _createSampleData();
+      _refreshTables();
+    } catch (e) {
+      print('Error creating sample database: $e');
+    }
+  }
+
+  Future<void> _createSampleData() async {
+    try {
+      final dbService = ref.read(databaseServiceProvider);
+      final db = dbService.database;
+
+      if (db == null) return;
+
+      // Create users table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          email TEXT UNIQUE NOT NULL,
+          age INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      ''');
+
+      // Create products table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS products (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          price REAL NOT NULL,
+          category TEXT,
+          stock INTEGER DEFAULT 0
+        )
+      ''');
+
+      // Insert sample users
+      await db.execute('''
+        INSERT OR IGNORE INTO users (name, email, age) VALUES
+        ('Alice Johnson', 'alice@example.com', 28),
+        ('Bob Smith', 'bob@example.com', 34),
+        ('Carol Davis', 'carol@example.com', 25),
+        ('David Wilson', 'david@example.com', 31),
+        ('Eva Brown', 'eva@example.com', 29)
+      ''');
+
+      // Insert sample products
+      await db.execute('''
+        INSERT OR IGNORE INTO products (name, price, category, stock) VALUES
+        ('Laptop', 999.99, 'Electronics', 15),
+        ('Mouse', 25.50, 'Electronics', 50),
+        ('Keyboard', 75.00, 'Electronics', 30),
+        ('Monitor', 299.99, 'Electronics', 12),
+        ('Desk Chair', 150.00, 'Furniture', 8)
+      ''');
+    } catch (e) {
+      print('Error creating sample data: $e');
+    }
   }
 
   @override
@@ -506,7 +581,12 @@ class _DatabaseManagerScreenState extends ConsumerState<DatabaseManagerScreen>
     }
 
     try {
+      // Close current database first
       final dbService = ref.read(databaseServiceProvider);
+      if (dbService.databaseInfo != null && dbService.databaseInfo!.isOpen) {
+        await dbService.closeDB();
+      }
+
       String dbName = _dbNameController.text;
       if (!dbName.endsWith('.db')) {
         dbName += '.db';
@@ -553,14 +633,27 @@ class _DatabaseManagerScreenState extends ConsumerState<DatabaseManagerScreen>
 
   void _loadTableData(String tableName) async {
     try {
-      final tableService = ref.read(tableServiceProvider);
-      final data = await tableService.getTableData(tableName);
-      final columns = await tableService.getTableColumns(tableName);
+      final dbService = ref.read(databaseServiceProvider);
+      if (dbService.database == null) return;
 
-      ref.read(tableDataProvider.notifier).state = data;
+      // Get table columns
+      final columnResult = await dbService.database!.rawQuery(
+        'PRAGMA table_info($tableName)',
+      );
+      final columns = columnResult
+          .map((row) => row['name'].toString())
+          .toList();
+
+      // Get table data
+      final dataResult = await dbService.database!.rawQuery(
+        'SELECT * FROM $tableName LIMIT 100',
+      );
+
+      ref.read(tableDataProvider.notifier).state = dataResult;
       ref.read(tableColumnsProvider.notifier).state = columns;
     } catch (e) {
       _showSnackbar('Error loading table data: $e');
+      print('Table data loading error: $e');
     }
   }
 

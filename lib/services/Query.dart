@@ -13,7 +13,7 @@ class QueryService {
     final rows = await db!.rawQuery(sql);
 
     final columns = rows.isNotEmpty
-        ? rows.first.keys.map((key) => key.toString()).toList()
+        ? rows.first.keys.map((key) => key.toString()).toList().cast<String>()
         : <String>[];
 
     return QueryResult(columns: columns, rows: rows, executedAt: executedAt);
@@ -27,8 +27,9 @@ class QueryService {
   }
 
   Future<QueryResult> runQuery(String sql) async {
-    sql = sql.trim().toUpperCase();
-    if (sql.startsWith("SELECT")) return runSelect(sql);
-    return executeNonQuery(sql);
+    final trimmedSql = sql.trim();
+    final upperSql = trimmedSql.toUpperCase();
+    if (upperSql.startsWith("SELECT")) return runSelect(trimmedSql);
+    return executeNonQuery(trimmedSql);
   }
 }

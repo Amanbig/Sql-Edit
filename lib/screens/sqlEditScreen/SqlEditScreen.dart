@@ -1,14 +1,15 @@
 import 'package:code_text_field/code_text_field.dart';
-import 'package:data_table_2/data_table_2.dart';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:highlight/languages/sql.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:sql_edit/models/QueryHistory.dart';
 import 'package:sql_edit/providers/DatabaseServiceProvider.dart';
-import 'package:sql_edit/providers/QueryHistoryProvider.dart';
 import 'package:sql_edit/providers/QueryServiceProvider.dart';
+import 'package:sql_edit/providers/QueryHistoryProvider.dart';
 import 'package:sql_edit/providers/TableProvider.dart';
 
 class SqlEditorScreen extends ConsumerStatefulWidget {
@@ -20,17 +21,15 @@ class SqlEditorScreen extends ConsumerStatefulWidget {
 
 class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
     with TickerProviderStateMixin {
-  late CodeController _queryController;
+  late TextEditingController _queryController;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _queryController = CodeController(
-      text:
-          '-- Welcome to SQL Editor\n-- Write your SQL queries here\n\nSELECT * FROM table_name LIMIT 10;',
-      language: sql,
+    _queryController = TextEditingController(
+      text: 'SELECT * FROM users LIMIT 5;',
     );
 
     _animationController = AnimationController(
@@ -42,12 +41,20 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    _animationController.forward();
+    // Start animation after first frame to avoid layout interference
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
   }
 
   @override
   void dispose() {
     _queryController.dispose();
+    if (_animationController.isAnimating) {
+      _animationController.stop();
+    }
     _animationController.dispose();
     super.dispose();
   }
@@ -157,56 +164,55 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
         builder: (context, child) {
           return Opacity(
             opacity: _fadeAnimation.value,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Enhanced Database Controls
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: theme.colorScheme.outline.withOpacity(0.2),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Enhanced Database Controls
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Database Controls",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (isLargeScreen)
+                          Row(
+                            children: _buildControlButtons(
+                              theme,
+                              dbInfo,
+                              queryResult,
+                            ),
+                          )
+                        else
+                          Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: _buildControlButtons(
+                              theme,
+                              dbInfo,
+                              queryResult,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Database Controls",
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (isLargeScreen)
-                        Row(
-                          children: _buildControlButtons(
-                            theme,
-                            dbInfo,
-                            queryResult,
-                          ),
-                        )
-                      else
-                        Wrap(
-                          spacing: 8.0,
-                          runSpacing: 8.0,
-                          children: _buildControlButtons(
-                            theme,
-                            dbInfo,
-                            queryResult,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
 
-                // Enhanced Query Editor
-                Expanded(
-                  flex: 2,
-                  child: Container(
+                  // Enhanced Query Editor
+                  Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,77 +254,107 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: theme.colorScheme.outline.withOpacity(
-                                  0.3,
-                                ),
-                              ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: theme.brightness == Brightness.dark
+                                ? const Color(0xFF1E1E1E)
+                                : const Color(0xFFFAFBFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.grey[700]!
+                                  : const Color(0xFFE2E8F0),
                             ),
-                            child: CodeField(
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: TextFormField(
                               controller: _queryController,
-                              textStyle: GoogleFonts.jetBrainsMono(
+                              maxLines: null,
+                              minLines: 5,
+                              style: GoogleFonts.jetBrainsMono(
                                 fontSize: 14,
-                                height: 1.4,
+                                height: 1.5,
+                                color: theme.brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black87,
                               ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant
-                                    .withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                hintText: 'Enter your SQL query here...',
+                                hintStyle: GoogleFonts.jetBrainsMono(
+                                  color: Colors.grey[500],
+                                ),
                               ),
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
-                ),
 
-                // Enhanced Execute Button
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  child: FilledButton.icon(
-                    onPressed: dbInfo != null ? _executeQuery : null,
-                    icon: Icon(Icons.play_arrow_rounded, size: 20),
-                    label: Text(
-                      "Execute Query",
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                  // Enhanced Execute Button
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    child: FilledButton.icon(
+                      onPressed: dbInfo != null ? _executeQuery : null,
+                      icon: Icon(Icons.play_arrow_rounded, size: 20),
+                      label: Text(
+                        "Execute Query",
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                // Enhanced Main Content: Results + History
-                Expanded(
-                  flex: 3,
-                  child: Container(
+                  // Enhanced Main Content: Results + History
+                  Container(
                     margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: isLargeScreen
-                        ? Row(
-                            children: [
-                              _buildResultsPanel(context, theme, queryResult),
-                              const SizedBox(width: 16),
-                              _buildHistoryPanel(context, theme, history),
-                            ],
+                        ? Container(
+                            constraints: const BoxConstraints(
+                              minHeight: 400,
+                              maxHeight: 600,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildResultsPanel(
+                                    context,
+                                    theme,
+                                    queryResult,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  flex: 1,
+                                  child: _buildHistoryPanel(
+                                    context,
+                                    theme,
+                                    history,
+                                  ),
+                                ),
+                              ],
+                            ),
                           )
                         : Column(
                             children: [
-                              Expanded(
-                                flex: 2,
+                              Container(
+                                height: 400,
                                 child: _buildResultsPanel(
                                   context,
                                   theme,
@@ -326,8 +362,8 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              Expanded(
-                                flex: 1,
+                              Container(
+                                height: 300,
                                 child: _buildHistoryPanel(
                                   context,
                                   theme,
@@ -337,8 +373,8 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
                             ],
                           ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -415,137 +451,175 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
     ThemeData theme,
     dynamic queryResult,
   ) {
-    return Expanded(
-      flex: 3,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.table_chart_rounded,
-                    color: theme.colorScheme.primary,
-                    size: 20,
+    final dbInfo = ref.watch(databaseInfoProvider);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.table_chart_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "Query Results",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    "Query Results",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                ),
+                if (queryResult != null && queryResult.rows.isNotEmpty) ...[
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "${queryResult.rows.length} rows",
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  if (queryResult != null && queryResult.rows.isNotEmpty) ...[
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        "${queryResult.rows.length} rows",
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
+              ],
+            ),
+          ),
+          Divider(height: 1, color: theme.colorScheme.outline.withOpacity(0.2)),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
               ),
-            ),
-            Divider(
-              height: 1,
-              color: theme.colorScheme.outline.withOpacity(0.2),
-            ),
-            Expanded(
-              child: queryResult != null && queryResult.rows.isNotEmpty
+              child:
+                  queryResult != null &&
+                      queryResult.columns.isNotEmpty &&
+                      queryResult.rows.isNotEmpty
                   ? SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: SingleChildScrollView(
-                        child: DataTable2(
-                          columnSpacing: 16,
-                          horizontalMargin: 20,
-                          minWidth: 600,
-                          headingRowColor: MaterialStateProperty.all(
-                            theme.colorScheme.surfaceVariant.withOpacity(0.5),
-                          ),
-                          columns: queryResult.columns
-                              .map(
-                                (col) => DataColumn2(
-                                  label: Text(
-                                    col,
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  size: ColumnSize.L,
-                                ),
-                              )
-                              .toList(),
-                          rows: queryResult.rows
-                              .map(
-                                (row) => DataRow2(
-                                  cells: queryResult.columns
-                                      .map(
-                                        (col) => DataCell(
-                                          Text(
-                                            row[col]?.toString() ?? "",
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                              )
-                              .toList(),
+                      child: DataTable(
+                        columnSpacing: 12,
+                        horizontalMargin: 16,
+                        headingRowColor: MaterialStateProperty.all(
+                          theme.brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : const Color(0xFFF4F6F8),
                         ),
+                        columns: queryResult.columns
+                            .cast<String>()
+                            .map(
+                              (col) => DataColumn(
+                                label: Text(
+                                  col,
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList()
+                            .cast<DataColumn>(),
+                        rows: queryResult.rows
+                            .map(
+                              (row) => DataRow(
+                                cells: queryResult.columns
+                                    .cast<String>()
+                                    .map(
+                                      (col) => DataCell(
+                                        Text(
+                                          row[col]?.toString() ?? "",
+                                          style: theme.textTheme.bodyMedium,
+                                        ),
+                                      ),
+                                    )
+                                    .toList()
+                                    .cast<DataCell>(),
+                              ),
+                            )
+                            .toList()
+                            .cast<DataRow>(),
                       ),
                     )
                   : Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          const SizedBox(height: 60),
                           Icon(
-                            Icons.table_chart_outlined,
+                            dbInfo == null || !dbInfo.isOpen
+                                ? Icons.storage_outlined
+                                : Icons.table_chart_outlined,
                             size: 64,
-                            color: theme.colorScheme.onSurface.withOpacity(0.3),
+                            color: theme.brightness == Brightness.dark
+                                ? Colors.grey[600]
+                                : Colors.grey[400],
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            "No results to display",
+                            dbInfo == null || !dbInfo.isOpen
+                                ? "No database connected"
+                                : queryResult == null
+                                ? "No results to display"
+                                : "Query returned empty result",
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.6,
-                              ),
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.grey[300]
+                                  : Colors.grey[700],
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Execute a query to see results here",
+                            dbInfo == null || !dbInfo.isOpen
+                                ? "Connect to a database first to run queries"
+                                : queryResult == null
+                                ? "Execute a query to see results here"
+                                : "Query: ${queryResult.columns.length} columns, ${queryResult.rows.length} rows",
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.4,
-                              ),
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.grey[500]
+                                  : Colors.grey[600],
                             ),
                           ),
+                          if (dbInfo == null || !dbInfo.isOpen) ...[
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: () => Navigator.pushNamed(
+                                context,
+                                '/database-manager',
+                              ),
+                              icon: const Icon(Icons.add_circle_outline),
+                              label: const Text('Create Database'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 60),
                         ],
                       ),
                     ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -553,63 +627,77 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
   Widget _buildHistoryPanel(
     BuildContext context,
     ThemeData theme,
-    List<dynamic> history,
+    List<QueryHistory> history,
   ) {
-    return Expanded(
-      flex: 2,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.history_rounded,
-                    color: theme.colorScheme.secondary,
-                    size: 20,
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.history_rounded,
+                  color: theme.colorScheme.secondary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "Query History",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (history.isNotEmpty) ...[
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "${history.length}",
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.secondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    "Query History",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  IconButton(
+                    onPressed: () => _clearQueryHistory(),
+                    icon: Icon(
+                      Icons.clear_all_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    tooltip: 'Clear History',
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(32, 32),
+                      padding: const EdgeInsets.all(4),
                     ),
                   ),
-                  if (history.isNotEmpty) ...[
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        "${history.length}",
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.secondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
+              ],
+            ),
+          ),
+          Divider(height: 1, color: theme.colorScheme.outline.withOpacity(0.2)),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
               ),
-            ),
-            Divider(
-              height: 1,
-              color: theme.colorScheme.outline.withOpacity(0.2),
-            ),
-            Expanded(
               child: history.isNotEmpty
                   ? ListView.builder(
                       padding: const EdgeInsets.all(8),
@@ -618,111 +706,174 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
                         final q = history[index];
                         return Container(
                           margin: const EdgeInsets.symmetric(vertical: 4),
-                          child: ListTile(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                          child: Dismissible(
+                            key: Key(
+                              '${q.query}_${q.executedAt.millisecondsSinceEpoch}',
                             ),
-                            tileColor: theme.colorScheme.surfaceVariant
-                                .withOpacity(0.3),
-                            leading: Container(
-                              width: 32,
-                              height: 32,
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (direction) {
+                              _removeQueryFromHistory(q);
+                            },
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.secondary.withOpacity(
-                                  0.1,
-                                ),
+                                color: theme.colorScheme.error.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
-                                Icons.code_rounded,
-                                color: theme.colorScheme.secondary,
-                                size: 16,
+                                Icons.delete_outline,
+                                color: theme.colorScheme.error,
                               ),
                             ),
-                            title: Text(
-                              q.query,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontFamily:
-                                    GoogleFonts.jetBrainsMono().fontFamily,
+                            child: ListTile(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ),
-                            subtitle: Text(
-                              q.executedAt.toString(),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.6,
+                              tileColor: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.3),
+                              leading: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.secondary
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.code_rounded,
+                                  color: theme.colorScheme.secondary,
+                                  size: 16,
                                 ),
                               ),
-                            ),
-                            onTap: () {
-                              _queryController.text = q.query;
-                              _showSnackbar("Loaded query from history");
-                            },
-                            trailing: Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 12,
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.4,
+                              title: Text(
+                                q.query,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontFamily:
+                                      GoogleFonts.jetBrainsMono().fontFamily,
+                                ),
+                              ),
+                              subtitle: Text(
+                                _formatDateTime(q.executedAt),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.6),
+                                ),
+                              ),
+                              onTap: () {
+                                _queryController.text = q.query;
+                                _showSnackbar("Loaded query from history");
+                              },
+                              trailing: Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 12,
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.4,
+                                ),
                               ),
                             ),
                           ),
                         );
                       },
                     )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.history_outlined,
-                            size: 48,
-                            color: theme.colorScheme.onSurface.withOpacity(0.3),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "No query history",
-                            style: theme.textTheme.bodyLarge?.copyWith(
+                  : SingleChildScrollView(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 60),
+                            Icon(
+                              Icons.history_outlined,
+                              size: 48,
                               color: theme.colorScheme.onSurface.withOpacity(
-                                0.6,
+                                0.3,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Your executed queries will appear here",
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.4,
+                            const SizedBox(height: 16),
+                            Text(
+                              "No query history",
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.6,
+                                ),
                               ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              "Your executed queries will appear here",
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 60),
+                          ],
+                        ),
                       ),
                     ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   void _executeQuery() async {
+    // Prevent execution during layout/animation
+    if (!mounted || _animationController.isAnimating) {
+      return;
+    }
+
+    final dbInfo = ref.read(databaseInfoProvider);
+
+    // Check if database is connected
+    if (dbInfo == null || !dbInfo.isOpen) {
+      _showSnackbar(
+        "No database connected. Please create or open a database first.",
+        isError: true,
+      );
+      return;
+    }
+
     final queryService = ref.read(queryServiceProvider);
     final historyService = ref.read(queryHistoryServiceProvider);
 
+    // Extract actual SQL query from editor content
+    final query = _extractExecutableQuery(_queryController.text);
+    if (query.isEmpty) {
+      _showSnackbar(
+        "Please enter a valid SQL query to execute.",
+        isError: true,
+      );
+      return;
+    }
+
     try {
-      final result = await queryService.runQuery(_queryController.text);
-      ref.read(queryResultProvider.notifier).state = result;
+      final result = await queryService.runQuery(query);
 
-      historyService.saveQuery(_queryController.text);
-      ref.read(queryHistoryProvider.notifier).state = historyService
-          .loadHistory();
+      // Debug logging
+      print("Extracted query: '$query'");
+      print(
+        "Result: ${result.columns.length} columns, ${result.rows.length} rows",
+      );
 
-      _showSnackbar("Query executed successfully (${result.rows.length} rows)");
+      // Only update state if widget is still mounted
+      if (mounted) {
+        ref.read(queryResultProvider.notifier).state = result;
+
+        historyService.saveQuery(query);
+        ref.read(queryHistoryProvider.notifier).state = historyService
+            .loadHistory();
+
+        _showSnackbar(
+          "Query executed successfully (${result.rows.length} rows)",
+        );
+      }
     } catch (e) {
+      print("Query error: $e");
       _showSnackbar("Error: ${e.toString()}", isError: true);
     }
   }
@@ -783,5 +934,103 @@ class _SqlEditorScreenState extends ConsumerState<SqlEditorScreen>
     } catch (e) {
       _showSnackbar("Error refreshing tables: $e");
     }
+  }
+
+  void _clearQueryHistory() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Clear Query History',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Are you sure you want to clear all query history? This action cannot be undone.',
+            style: GoogleFonts.poppins(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel', style: GoogleFonts.poppins()),
+            ),
+            TextButton(
+              onPressed: () {
+                final historyService = ref.read(queryHistoryServiceProvider);
+                historyService.clearHistory();
+                ref.read(queryHistoryProvider.notifier).state = historyService
+                    .loadHistory();
+                Navigator.of(context).pop();
+                _showSnackbar('Query history cleared');
+              },
+              child: Text(
+                'Clear',
+                style: GoogleFonts.poppins(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _removeQueryFromHistory(QueryHistory queryToRemove) {
+    final historyService = ref.read(queryHistoryServiceProvider);
+    historyService.deleteQuery(queryToRemove);
+    ref.read(queryHistoryProvider.notifier).state = historyService
+        .loadHistory();
+    _showSnackbar('Query removed from history');
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  String _extractExecutableQuery(String editorContent) {
+    final lines = editorContent.split('\n');
+    final sqlLines = <String>[];
+
+    for (String line in lines) {
+      final trimmedLine = line.trim();
+
+      // Skip empty lines and comments
+      if (trimmedLine.isEmpty || trimmedLine.startsWith('--')) {
+        continue;
+      }
+
+      sqlLines.add(line);
+
+      // If line ends with semicolon, we found a complete query
+      if (trimmedLine.endsWith(';')) {
+        break;
+      }
+    }
+
+    if (sqlLines.isEmpty) {
+      return '';
+    }
+
+    // Join the lines and clean up the query
+    String query = sqlLines.join('\n').trim();
+
+    // Remove trailing semicolon for consistency
+    if (query.endsWith(';')) {
+      query = query.substring(0, query.length - 1).trim();
+    }
+
+    return query;
   }
 }

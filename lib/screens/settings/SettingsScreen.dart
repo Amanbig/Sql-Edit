@@ -238,7 +238,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
 
-                const Spacer(),
+                const SizedBox(height: 32),
 
                 // Reset Button
                 SizedBox(
