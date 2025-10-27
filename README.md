@@ -171,6 +171,7 @@ GROUP BY u.name;
 - **Typography**: Google Fonts (Inter, JetBrains Mono)
 - **File Operations**: `file_picker`, `share_plus`
 
+
 ### Project Structure
 ```
 lib/
