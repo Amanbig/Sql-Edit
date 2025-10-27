@@ -165,6 +165,132 @@ flutter test
 flutter format .
 ```
 
+## 🚀 CI/CD with GitHub Actions
+
+This project includes comprehensive GitHub Actions workflows for automated building, testing, and deployment across all supported platforms.
+
+### Available Workflows
+
+#### 1. **Mobile Build** (`.github/workflows/mobile.yml`)
+- **Triggers**: Push to `main`/`develop`, PRs to `main`, manual dispatch
+- **Platforms**: Android (APK + AAB), iOS (Archive)
+- **Artifacts**: 
+  - `android-apk`: Release APK for direct installation
+  - `android-aab`: App Bundle for Google Play Store
+  - `ios-archive`: iOS archive for App Store deployment
+
+#### 2. **Desktop Build** (`.github/workflows/desktop.yml`)
+- **Triggers**: Push to `main`/`develop`, PRs to `main`, manual dispatch
+- **Platforms**: Windows, macOS, Linux
+- **Artifacts**:
+  - `windows-app`: Windows executable package (ZIP)
+  - `macos-app`: macOS application bundle (ZIP)
+  - `linux-app`: Linux application package (TAR.GZ)
+
+#### 3. **Web Build** (`.github/workflows/web.yml`)
+- **Triggers**: Push to `main`/`develop`, PRs to `main`, manual dispatch
+- **Features**:
+  - Builds optimized web application
+  - Auto-deploys to GitHub Pages on `main` branch
+  - Generates `web-app` artifact for manual deployment
+
+#### 4. **Test & Code Quality** (`.github/workflows/test.yml`)
+- **Triggers**: Push to `main`/`develop`, PRs to `main`, manual dispatch
+- **Features**:
+  - Code formatting verification (`dart format`)
+  - Static analysis (`flutter analyze`)
+  - Unit test execution with coverage
+  - Integration test execution (Linux desktop)
+  - Dependency vulnerability scanning
+  - Security analysis with Super Linter
+  - Coverage upload to Codecov
+
+#### 5. **Release Build** (`.github/workflows/release.yml`)
+- **Triggers**: Git tags (`v*`), manual dispatch with version input
+- **Features**:
+  - Builds all platforms simultaneously
+  - Creates GitHub release with all artifacts
+  - Versioned artifact naming
+  - Auto-generates release notes
+
+### Setting Up GitHub Actions
+
+#### Prerequisites
+1. **Repository Setup**: Ensure your repository has Actions enabled
+2. **Secrets Configuration** (for advanced features):
+   ```
+   CODECOV_TOKEN     # For code coverage (optional)
+   ```
+
+#### For iOS Deployment (Optional)
+To enable iOS builds with code signing, add these secrets:
+```
+IOS_CERTIFICATE_BASE64    # Base64 encoded .p12 certificate
+IOS_CERTIFICATE_PASSWORD  # Certificate password
+IOS_PROVISIONING_PROFILE  # Base64 encoded provisioning profile
+IOS_TEAM_ID              # Apple Developer Team ID
+```
+
+#### For Android Deployment (Optional)
+To enable signed Android builds, add these secrets:
+```
+ANDROID_KEYSTORE_BASE64   # Base64 encoded keystore file
+ANDROID_KEYSTORE_PASSWORD # Keystore password
+ANDROID_KEY_ALIAS        # Key alias
+ANDROID_KEY_PASSWORD     # Key password
+```
+
+### Workflow Usage
+
+#### Manual Builds
+1. Go to **Actions** tab in your repository
+2. Select desired workflow (Mobile, Desktop, Web, etc.)
+3. Click **Run workflow**
+4. Choose branch and parameters
+5. Download artifacts from completed runs
+
+#### Automatic Builds
+- **Push to `main`**: Triggers all workflows + web deployment
+- **Push to `develop`**: Triggers build workflows (no deployment)
+- **Pull Requests**: Triggers test and build workflows
+- **Create Tag**: Triggers release workflow
+
+#### Creating Releases
+1. **Tag-based Release** (Recommended):
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+2. **Manual Release**:
+   - Go to Actions → Release Build
+   - Click "Run workflow"
+   - Enter version (e.g., `v1.0.0`)
+   - All platform builds will be created and released
+
+### Workflow Customization
+
+#### Flutter Version
+Update Flutter version in all workflow files:
+```yaml
+flutter-version: '3.24.3'  # Change to desired version
+```
+
+#### Build Configuration
+Modify build commands in workflows:
+```yaml
+# For release builds with specific parameters
+- name: Build Android APK
+  run: flutter build apk --release --build-name=1.0.0 --build-number=1
+```
+
+#### Platform-Specific Settings
+- **Windows**: Modify packaging in `desktop.yml`
+- **macOS**: Add code signing steps if needed
+- **Linux**: Install additional dependencies as required
+- **Android**: Configure signing for Play Store deployment
+- **iOS**: Add provisioning profiles for App Store deployment
+
 ## 🤝 Contributing
 
 1. Fork the repository

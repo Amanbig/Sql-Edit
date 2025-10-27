@@ -1,0 +1,358 @@
+name: Smart Build (Version-Based)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build even if version unchanged'
+        required: false
+        default: false
+        type: boolean
+      platforms:
+        description: 'Platforms to build (comma-separated: android,ios,windows,macos,linux)'
+        required: false
+        default: 'android,ios,windows,macos,linux'
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
+      version: ${{ steps.check.outputs.version }}
+      version-changed: ${{ steps.check.outputs.version-changed }}
+      platforms: ${{ steps.check.outputs.platforms }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check version and determine build strategy
+        id: check
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | tr -d ' ')
+          echo "Current version: $CURRENT_VERSION"
+
+          # Initialize variables
+          SHOULD_BUILD="false"
+          VERSION_CHANGED="false"
+          PLATFORMS="${{ github.event.inputs.platforms || 'android,ios,windows,macos,linux' }}"
+
+          # Force build check
+          if [ "${{ github.event.inputs.force_build }}" == "true" ]; then
+            echo "🔧 Force build requested"
+            SHOULD_BUILD="true"
+            VERSION_CHANGED="true"
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "🔧 Manual trigger - building"
+            SHOULD_BUILD="true"
+            VERSION_CHANGED="true"
+          else
+            # Check if version changed
+            case "${{ github.event_name }}" in
+              "push")
+                if git diff --name-only HEAD~1 HEAD | grep -q "pubspec.yaml"; then
+                  PREVIOUS_VERSION=$(git show HEAD~1:pubspec.yaml 2>/dev/null | grep '^version:' | sed 's/version: *//' | tr -d ' ' || echo "0.0.0")
+                  echo "Previous version: $PREVIOUS_VERSION"
+
+                  if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+                    echo "✅ Version changed: $PREVIOUS_VERSION → $CURRENT_VERSION"
+                    VERSION_CHANGED="true"
+                    SHOULD_BUILD="true"
+                  else
+                    echo "⏭️ Version unchanged, skipping build"
+                  fi
+                else
+                  echo "⏭️ pubspec.yaml not modified, skipping build"
+                fi
+                ;;
+              "pull_request")
+                # Always build on PR to validate
+                echo "🔍 PR build - validating changes"
+                SHOULD_BUILD="true"
+                # Check if version will change
+                if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "pubspec.yaml"; then
+                  BASE_VERSION=$(git show origin/${{ github.base_ref }}:pubspec.yaml 2>/dev/null | grep '^version:' | sed 's/version: *//' | tr -d ' ' || echo "0.0.0")
+                  if [ "$CURRENT_VERSION" != "$BASE_VERSION" ]; then
+                    VERSION_CHANGED="true"
+                    echo "📝 PR will change version: $BASE_VERSION → $CURRENT_VERSION"
+                  fi
+                fi
+                ;;
+            esac
+          fi
+
+          # Set outputs
+          echo "should-build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "version-changed=$VERSION_CHANGED" >> $GITHUB_OUTPUT
+          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+
+          # Create summary
+          echo "## 📋 Build Decision Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`$CURRENT_VERSION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Should Build | $SHOULD_BUILD |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version Changed | $VERSION_CHANGED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Platforms | $PLATFORMS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trigger | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+
+  android:
+    needs: version-check
+    if: needs.version-check.outputs.should-build == 'true' && contains(needs.version-check.outputs.platforms, 'android')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Build Android App Bundle
+        run: flutter build appbundle --release
+
+      - name: Rename artifacts with version
+        run: |
+          VERSION="${{ needs.version-check.outputs.version }}"
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/sql-edit-v${VERSION}-android.apk"
+          cp build/app/outputs/bundle/release/app-release.aab "dist/sql-edit-v${VERSION}-android.aab"
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-v${{ needs.version-check.outputs.version }}
+          path: dist/sql-edit-v${{ needs.version-check.outputs.version }}-android.*
+
+  ios:
+    needs: version-check
+    if: needs.version-check.outputs.should-build == 'true' && contains(needs.version-check.outputs.platforms, 'ios')
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: Build iOS (no signing)
+        run: flutter build ios --release --no-codesign
+
+      - name: Create iOS archive
+        run: |
+          VERSION="${{ needs.version-check.outputs.version }}"
+          mkdir -p dist
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination generic/platform=iOS \
+            -archivePath "../dist/sql-edit-v${VERSION}-ios.xcarchive" \
+            archive \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-v${{ needs.version-check.outputs.version }}
+          path: dist/sql-edit-v${{ needs.version-check.outputs.version }}-ios.xcarchive
+
+  windows:
+    needs: version-check
+    if: needs.version-check.outputs.should-build == 'true' && contains(needs.version-check.outputs.platforms, 'windows')
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows app
+        run: flutter build windows --release
+
+      - name: Create Windows package
+        run: |
+          $VERSION = "${{ needs.version-check.outputs.version }}"
+          New-Item -ItemType Directory -Force -Path "dist"
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "dist/sql-edit-v$VERSION-windows.zip"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-v${{ needs.version-check.outputs.version }}
+          path: dist/sql-edit-v${{ needs.version-check.outputs.version }}-windows.zip
+
+  macos:
+    needs: version-check
+    if: needs.version-check.outputs.should-build == 'true' && contains(needs.version-check.outputs.platforms, 'macos')
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS app
+        run: flutter build macos --release
+
+      - name: Create macOS package
+        run: |
+          VERSION="${{ needs.version-check.outputs.version }}"
+          mkdir -p dist
+          cd build/macos/Build/Products/Release/
+          zip -r "../../../../../dist/sql-edit-v${VERSION}-macos.zip" sql_edit.app
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-v${{ needs.version-check.outputs.version }}
+          path: dist/sql-edit-v${{ needs.version-check.outputs.version }}-macos.zip
+
+  linux:
+    needs: version-check
+    if: needs.version-check.outputs.should-build == 'true' && contains(needs.version-check.outputs.platforms, 'linux')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build libgtk-3-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Linux app
+        run: flutter build linux --release
+
+      - name: Create Linux package
+        run: |
+          VERSION="${{ needs.version-check.outputs.version }}"
+          mkdir -p dist
+          cd build/linux/x64/release/bundle/
+          tar -czf "../../../../../dist/sql-edit-v${VERSION}-linux.tar.gz" *
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-v${{ needs.version-check.outputs.version }}
+          path: dist/sql-edit-v${{ needs.version-check.outputs.version }}-linux.tar.gz
+
+  build-summary:
+    needs: [version-check, android, ios, windows, macos, linux]
+    if: always() && needs.version-check.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create build summary
+        run: |
+          echo "## 🎉 Build Completed" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ needs.version-check.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Built Artifacts:" >> $GITHUB_STEP_SUMMARY
+
+          # Check which jobs succeeded
+          if [ "${{ needs.android.result }}" == "success" ]; then
+            echo "- ✅ **Android** - APK & AAB" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.android.result }}" == "failure" ]; then
+            echo "- ❌ **Android** - Build failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.android.result }}" == "skipped" ]; then
+            echo "- ⏭️ **Android** - Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.ios.result }}" == "success" ]; then
+            echo "- ✅ **iOS** - Archive" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.ios.result }}" == "failure" ]; then
+            echo "- ❌ **iOS** - Build failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.ios.result }}" == "skipped" ]; then
+            echo "- ⏭️ **iOS** - Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.windows.result }}" == "success" ]; then
+            echo "- ✅ **Windows** - ZIP package" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.windows.result }}" == "failure" ]; then
+            echo "- ❌ **Windows** - Build failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.windows.result }}" == "skipped" ]; then
+            echo "- ⏭️ **Windows** - Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.macos.result }}" == "success" ]; then
+            echo "- ✅ **macOS** - ZIP package" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.macos.result }}" == "failure" ]; then
+            echo "- ❌ **macOS** - Build failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.macos.result }}" == "skipped" ]; then
+            echo "- ⏭️ **macOS** - Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.linux.result }}" == "success" ]; then
+            echo "- ✅ **Linux** - TAR.GZ package" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.linux.result }}" == "failure" ]; then
+            echo "- ❌ **Linux** - Build failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.linux.result }}" == "skipped" ]; then
+            echo "- ⏭️ **Linux** - Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All artifacts are available in the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
