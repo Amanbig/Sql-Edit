@@ -120,8 +120,14 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
+          flutter-version: 'latest'
           channel: 'stable'
+
+      - name: Verify Dart SDK version
+        run: |
+          echo "Checking Dart SDK version..."
+          dart --version
+          echo "Using Flutter stable channel with lowered SDK requirement"
 
       - name: Install dependencies
         run: flutter pub get
@@ -156,8 +162,14 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
+          flutter-version: 'latest'
           channel: 'stable'
+
+      - name: Verify Dart SDK version
+        run: |
+          echo "Checking Dart SDK version..."
+          dart --version
+          echo "Using Flutter stable channel with lowered SDK requirement"
 
       - name: Install dependencies
         run: flutter pub get
@@ -200,8 +212,14 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
+          flutter-version: 'latest'
           channel: 'stable'
+
+      - name: Verify Dart SDK version
+        run: |
+          echo "Checking Dart SDK version..."
+          dart --version
+          echo "Using Flutter stable channel with lowered SDK requirement"
 
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
@@ -235,8 +253,14 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
+          flutter-version: 'latest'
           channel: 'stable'
+
+      - name: Verify Dart SDK version
+        run: |
+          echo "Checking Dart SDK version..."
+          dart --version
+          echo "Using Flutter stable channel with lowered SDK requirement"
 
       - name: Enable macOS desktop
         run: flutter config --enable-macos-desktop
@@ -276,8 +300,14 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
+          flutter-version: 'latest'
           channel: 'stable'
+
+      - name: Verify Dart SDK version
+        run: |
+          echo "Checking Dart SDK version..."
+          dart --version
+          echo "Using Flutter stable channel with lowered SDK requirement"
 
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
