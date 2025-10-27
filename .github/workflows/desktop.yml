@@ -63,7 +63,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.3'
+          flutter-version: '3.27.0'
           channel: 'stable'
 
       - name: Enable Windows desktop
@@ -100,7 +100,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.3'
+          flutter-version: '3.27.0'
           channel: 'stable'
 
       - name: Enable macOS desktop
@@ -143,7 +143,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.3'
+          flutter-version: '3.27.0'
           channel: 'stable'
 
       - name: Enable Linux desktop

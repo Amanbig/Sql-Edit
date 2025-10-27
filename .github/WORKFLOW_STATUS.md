@@ -29,7 +29,7 @@ Add these badges to your README.md to show the status of your builds:
 ## Platform Support
 
 ```markdown
-![Flutter](https://img.shields.io/badge/Flutter-3.24.3-blue.svg)
+![Flutter](https://img.shields.io/badge/Flutter-3.27.0-blue.svg)
 ![Android](https://img.shields.io/badge/Android-✓-green.svg)
 ![iOS](https://img.shields.io/badge/iOS-✓-green.svg)
 ![Windows](https://img.shields.io/badge/Windows-✓-green.svg)

@@ -151,9 +151,10 @@ Workflows detect version changes by:
 ## 🔧 Configuration
 
 ### Flutter Version
-All workflows use Flutter `3.24.3` stable. To update:
+All workflows use Flutter `3.27.0` stable (includes Dart SDK 3.9.2+). To update:
 1. Change the `flutter-version` in all workflow files
 2. Test builds locally first
+3. Ensure Flutter version includes required Dart SDK version
 
 ### Build Configurations
 - All builds use `--release` configuration for optimized performance
@@ -189,17 +190,22 @@ For production releases, you may want to add these secrets:
 
 ### Version-Related Issues
 
-1. **Builds not triggering:**
+1. **SDK version conflicts:**
+   - Workflows use Flutter 3.27.0 with Dart SDK 3.9.2+
+   - Ensure your `pubspec.yaml` SDK version is compatible: `sdk: ^3.9.2`
+   - Update local Flutter if needed: `flutter upgrade`
+
+2. **Builds not triggering:**
    - Ensure you actually changed the `version:` line in `pubspec.yaml`
    - Check that you're pushing to `main` or `develop` branch
    - Verify the version format: `MAJOR.MINOR.PATCH+BUILD` (e.g., `1.0.0+1`)
 
-2. **"No version change detected":**
+3. **"No version change detected":**
    - The workflow correctly detected no version change
    - Use manual trigger with "Force build" if needed
    - Double-check your version format in `pubspec.yaml`
 
-3. **Version validation warnings:**
+4. **Version validation warnings:**
    - Ensure version follows semantic versioning: `1.0.0+1`
    - Build number (+1) is optional but recommended for mobile apps
 
@@ -287,7 +293,8 @@ env:
 
 ### Version Management
 1. **Use semantic versioning** in `pubspec.yaml`: `MAJOR.MINOR.PATCH+BUILD`
-2. **Increment appropriately:**
+2. **Ensure SDK compatibility**: Flutter 3.27.0+ supports Dart SDK 3.9.2+
+3. **Increment appropriately:**
    - **PATCH** (1.0.1): Bug fixes
    - **MINOR** (1.1.0): New features (backward compatible)
    - **MAJOR** (2.0.0): Breaking changes
