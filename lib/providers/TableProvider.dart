@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:sql_edit/providers/DatabaseServiceProvider.dart';
 
 // Provider for current table list
@@ -97,11 +96,9 @@ class TableService {
   ) async {
     if (_databaseService.database == null) return;
 
-    final columnDefinitions = columns
-        .map((col) {
-          return '${col['name']} ${col['type']}${col['constraints'] ?? ''}';
-        })
-        .join(', ');
+    final columnDefinitions = columns.map((col) {
+      return '${col['name']} ${col['type']}${col['constraints'] ?? ''}';
+    }).join(', ');
 
     final sql = 'CREATE TABLE $tableName ($columnDefinitions)';
     await _databaseService.database!.execute(sql);

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+
 import 'package:sql_edit/models/QueryHistory.dart';
 import 'package:sql_edit/services/QueryHistory.dart';
 

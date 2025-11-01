@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 
 // Theme mode provider
@@ -11,19 +11,18 @@ final lightThemeProvider = Provider<ThemeData>((ref) {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    colorScheme:
-        ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6366F1), // Indigo primary
-          brightness: Brightness.light,
-          dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
-        ).copyWith(
-          surface: const Color(0xFFFAFBFC),
-          onSurface: const Color(0xFF1A1B1E),
-          surfaceVariant: const Color(0xFFF4F6F8),
-          onSurfaceVariant: const Color(0xFF4A5568),
-          outline: const Color(0xFFE2E8F0),
-          outlineVariant: const Color(0xFFF1F5F9),
-        ),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: const Color(0xFF6366F1), // Indigo primary
+      brightness: Brightness.light,
+      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+    ).copyWith(
+      surface: const Color(0xFFFAFBFC),
+      onSurface: const Color(0xFF1A1B1E),
+      surfaceVariant: const Color(0xFFF4F6F8),
+      onSurfaceVariant: const Color(0xFF4A5568),
+      outline: const Color(0xFFE2E8F0),
+      outlineVariant: const Color(0xFFF1F5F9),
+    ),
     textTheme: GoogleFonts.interTextTheme().copyWith(
       displayLarge: GoogleFonts.inter(
         fontSize: 57,
@@ -98,7 +97,7 @@ final lightThemeProvider = Provider<ThemeData>((ref) {
       elevation: 0,
       scrolledUnderElevation: 2,
       surfaceTintColor: const Color(0xFF6366F1),
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       titleTextStyle: GoogleFonts.inter(
         fontSize: 22,
         fontWeight: FontWeight.w600,
@@ -110,11 +109,11 @@ final lightThemeProvider = Provider<ThemeData>((ref) {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: const Color(0xFFE2E8F0), width: 1),
+        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
       ),
       color: Colors.white,
       surfaceTintColor: const Color(0xFF6366F1),
-      shadowColor: Colors.black.withOpacity(0.05),
+      shadowColor: Colors.black.withValues(alpha: 0.05),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -206,6 +205,7 @@ final lightThemeProvider = Provider<ThemeData>((ref) {
       unselectedLabelColor: const Color(0xFF6B7280),
       indicatorColor: const Color(0xFF6366F1),
       indicatorSize: TabBarIndicatorSize.label,
+      dividerColor: const Color(0xFFE2E8F0),
       labelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
       unselectedLabelStyle: GoogleFonts.inter(
         fontSize: 14,
@@ -234,24 +234,23 @@ final darkThemeProvider = Provider<ThemeData>((ref) {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    colorScheme:
-        ColorScheme.fromSeed(
-          seedColor: const Color(0xFF8B5CF6), // Purple primary for dark mode
-          brightness: Brightness.dark,
-          dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
-        ).copyWith(
-          surface: const Color(0xFF0F0F0F),
-          onSurface: const Color(0xFFE4E7EB),
-          surfaceVariant: const Color(0xFF1A1B1E),
-          onSurfaceVariant: const Color(0xFFD1D5DB),
-          outline: const Color(0xFF374151),
-          outlineVariant: const Color(0xFF1F2937),
-          primary: const Color(0xFF8B5CF6),
-          onPrimary: Colors.white,
-          secondary: const Color(0xFF06B6D4),
-          tertiary: const Color(0xFF10B981),
-          error: const Color(0xFFEF4444),
-        ),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: const Color(0xFF8B5CF6), // Purple primary for dark mode
+      brightness: Brightness.dark,
+      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+    ).copyWith(
+      surface: const Color(0xFF0F0F0F),
+      onSurface: const Color(0xFFE4E7EB),
+      surfaceVariant: const Color(0xFF1A1B1E),
+      onSurfaceVariant: const Color(0xFFD1D5DB),
+      outline: const Color(0xFF374151),
+      outlineVariant: const Color(0xFF1F2937),
+      primary: const Color(0xFF8B5CF6),
+      onPrimary: Colors.white,
+      secondary: const Color(0xFF06B6D4),
+      tertiary: const Color(0xFF10B981),
+      error: const Color(0xFFEF4444),
+    ),
     textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
       displayLarge: GoogleFonts.inter(
         fontSize: 57,
@@ -344,7 +343,7 @@ final darkThemeProvider = Provider<ThemeData>((ref) {
       elevation: 0,
       scrolledUnderElevation: 2,
       surfaceTintColor: const Color(0xFF8B5CF6),
-      shadowColor: Colors.black.withOpacity(0.3),
+      shadowColor: Colors.black.withValues(alpha: 0.3),
       titleTextStyle: GoogleFonts.inter(
         fontSize: 22,
         fontWeight: FontWeight.w600,
@@ -356,11 +355,11 @@ final darkThemeProvider = Provider<ThemeData>((ref) {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: const Color(0xFF374151), width: 1),
+        side: const BorderSide(color: Color(0xFF374151), width: 1),
       ),
       color: const Color(0xFF1A1B1E),
       surfaceTintColor: const Color(0xFF8B5CF6),
-      shadowColor: Colors.black.withOpacity(0.2),
+      shadowColor: Colors.black.withValues(alpha: 0.2),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -452,6 +451,7 @@ final darkThemeProvider = Provider<ThemeData>((ref) {
       unselectedLabelColor: const Color(0xFF9CA3AF),
       indicatorColor: const Color(0xFF8B5CF6),
       indicatorSize: TabBarIndicatorSize.label,
+      dividerColor: const Color(0xFF374151),
       labelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
       unselectedLabelStyle: GoogleFonts.inter(
         fontSize: 14,

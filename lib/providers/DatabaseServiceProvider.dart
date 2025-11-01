@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:sql_edit/models/DatabaseInfo.dart';
 import 'package:sql_edit/services/Database.dart';
 
