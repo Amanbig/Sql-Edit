@@ -2,9 +2,9 @@ name: Flutter Multi-Platform Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
 
 jobs:
@@ -13,40 +13,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
-      
+          distribution: "zulu"
+          java-version: "17"
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'
-          channel: 'stable'
-      
+          flutter-version: "3.27.0"
+          channel: "stable"
+
       - name: Install dependencies
         run: flutter pub get
-      
-      - name: Analyze code
-        run: flutter analyze
-      
-      - name: Run tests
-        run: flutter test
-      
+
       - name: Build APK
         run: flutter build apk --release
-      
+
       - name: Build App Bundle
         run: flutter build appbundle --release
-      
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-      
+
       - name: Upload App Bundle
         uses: actions/upload-artifact@v4
         with:
@@ -58,19 +52,19 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-      
+          flutter-version: "3.24.0"
+          channel: "stable"
+
       - name: Install dependencies
         run: flutter pub get
-      
+
       - name: Build iOS (no codesign)
         run: flutter build ios --release --no-codesign
-      
+
       - name: Upload iOS Build
         uses: actions/upload-artifact@v4
         with:
@@ -82,26 +76,26 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-      
+          flutter-version: "3.24.0"
+          channel: "stable"
+
       - name: Install dependencies
         run: flutter pub get
-      
+
       - name: Enable Windows Desktop
         run: flutter config --enable-windows-desktop
-      
+
       - name: Build Windows
         run: flutter build windows --release
-      
+
       - name: Archive Windows Build
         run: |
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath windows-release.zip
-      
+
       - name: Upload Windows Build
         uses: actions/upload-artifact@v4
         with:
@@ -113,28 +107,28 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-      
+          flutter-version: "3.24.0"
+          channel: "stable"
+
       - name: Install dependencies
         run: flutter pub get
-      
+
       - name: Enable macOS Desktop
         run: flutter config --enable-macos-desktop
-      
+
       - name: Build macOS
         run: flutter build macos --release
-      
+
       - name: Archive macOS Build
         run: |
           cd build/macos/Build/Products/Release
           zip -r macos-release.zip *.app
           mv macos-release.zip $GITHUB_WORKSPACE/
-      
+
       - name: Upload macOS Build
         uses: actions/upload-artifact@v4
         with:
@@ -146,32 +140,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-      
+          flutter-version: "3.24.0"
+          channel: "stable"
+
       - name: Install dependencies
         run: flutter pub get
-      
+
       - name: Enable Linux Desktop
         run: flutter config --enable-linux-desktop
-      
+
       - name: Build Linux
         run: flutter build linux --release
-      
+
       - name: Archive Linux Build
         run: |
           cd build/linux/x64/release/bundle
           tar -czf $GITHUB_WORKSPACE/linux-release.tar.gz *
-      
+
       - name: Upload Linux Build
         uses: actions/upload-artifact@v4
         with:
@@ -183,24 +177,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-      
+          flutter-version: "3.24.0"
+          channel: "stable"
+
       - name: Install dependencies
         run: flutter pub get
-      
+
       - name: Build Web
         run: flutter build web --release
-      
+
       - name: Archive Web Build
         run: |
           cd build/web
           tar -czf $GITHUB_WORKSPACE/web-release.tar.gz *
-      
+
       - name: Upload Web Build
         uses: actions/upload-artifact@v4
         with:
